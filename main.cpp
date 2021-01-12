@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define WIN32_LEAN_AND_MEAN
 
 #include <string>
 #include <fstream>
@@ -7,6 +8,11 @@
 #include <windows.h>
 #include <WinBase.h>
 #include <tchar.h>
+
+//POCO library
+#include <Poco\Net\SMTPClientSession.h>
+#include <Poco\Net\MailMessage.h>
+#include <Poco\Net\MailRecipient.h>
 
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 
