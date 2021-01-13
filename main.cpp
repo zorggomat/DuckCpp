@@ -9,11 +9,6 @@
 #include <WinBase.h>
 #include <tchar.h>
 
-//POCO library
-#include <Poco\Net\SMTPClientSession.h>
-#include <Poco\Net\MailMessage.h>
-#include <Poco\Net\MailRecipient.h>
-
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 
 //Global variables
