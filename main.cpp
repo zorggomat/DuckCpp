@@ -13,9 +13,8 @@
 #include <WinBase.h>
 #include <tchar.h>
 
-#include <curl/curl.h>
-
-#include "AES.h"
+#include "curl/include/curl/curl.h"
+#include "AES/AES.h"
 
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 using std::string;
@@ -96,7 +95,7 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	}
 
 	//Create timer
-	SetTimer(NULL, 1, timerPeriodSeconds * 1000, TimerCallback);
+	SetTimer(NULL, 1, timerPeriodSeconds * 1000, (TIMERPROC)TimerCallback);
 
 	//Create or open log file
 	tstring logPath = dirPath + _T("\\") + logFileName;
