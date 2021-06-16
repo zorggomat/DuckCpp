@@ -8,6 +8,7 @@ DuckCpp is a multifunctional keylogger using WinAPI and libcurl.
 - Capturing all pressed keystrokes with low-level keyboard hook
 - Encryption of logs with AES
 - Sending logs via email
+- Debugger detection
 - If email does not work or is disabled, the program writes logs to your hard drive.
 
 #### Settings:
