@@ -1,4 +1,7 @@
 ## DuckCpp
+![Codacy grade](https://img.shields.io/codacy/grade/a700df65b8894b378b8804ef2517f404)
+![GitHub](https://img.shields.io/github/license/zorggish/DuckCpp)
+<br>
 DuckCpp is a multifunctional keylogger using WinAPI and libcurl.
 [VirusTotal 4/68](https://www.virustotal.com/gui/file/943115a35693d778f5c518fefc679adb243743e1a356a062659dadd95da37a50/detection)
 
